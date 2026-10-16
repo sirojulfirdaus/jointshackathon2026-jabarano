@@ -1967,21 +1967,7 @@ Exact database port boleh berubah jika conflict.
 
 # 73. Local Database
 
-Recommended local development:
-
-```text
-PostgreSQL via Docker Compose
-```
-
-Root dapat memiliki:
-
-```text
-docker-compose.yml
-```
-
-yang hanya menjalankan development PostgreSQL.
-
-Developer yang sudah memiliki PostgreSQL lokal dapat menggunakan connection string sendiri.
+Development menggunakan PostgreSQL yang connection string-nya dikonfigurasi melalui `DATABASE_URL`.
 
 ---
 
@@ -1994,7 +1980,7 @@ pnpm install
 
 configure .env
 
-start PostgreSQL
+ensure PostgreSQL is available
 
 run migration
 

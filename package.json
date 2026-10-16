@@ -1,0 +1,29 @@
+{
+  "name": "siapsapa",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.20.0",
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
+  "scripts": {
+    "dev": "concurrently -n web,api -c cyan,green \"corepack pnpm --filter @siapsapa/web dev\" \"corepack pnpm --filter @siapsapa/api dev\"",
+    "build": "corepack pnpm -r --if-present build",
+    "lint": "eslint .",
+    "format": "prettier --write \"{apps,packages}/**/*.{ts,tsx,json,css}\" .prettierrc.json eslint.config.js package.json pnpm-workspace.yaml",
+    "format:check": "prettier --check \"{apps,packages}/**/*.{ts,tsx,json,css}\" .prettierrc.json eslint.config.js package.json pnpm-workspace.yaml",
+    "typecheck": "corepack pnpm -r --if-present typecheck",
+    "test": "corepack pnpm -r --if-present test",
+    "db:generate": "corepack pnpm --filter @siapsapa/database generate",
+    "db:migrate": "corepack pnpm --filter @siapsapa/database migrate",
+    "db:seed": "corepack pnpm --filter @siapsapa/database seed"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "concurrently": "10.0.6",
+    "eslint": "10.0.1",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2"
+  }
+}

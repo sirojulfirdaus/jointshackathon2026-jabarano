@@ -1,0 +1,11 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Tech 2 owns the initial domain schema. Add models in the dependency order
+// documented in docs/DATA_MODEL.md before creating the first migration.

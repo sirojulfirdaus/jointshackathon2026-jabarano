@@ -1,5 +1,15 @@
 # SiapSapa
 
+## Local setup
+
+1. Copy `.env.example` to `.env`.
+2. Configure `DATABASE_URL` for your PostgreSQL instance.
+3. Install dependencies: `corepack pnpm install`.
+4. Start web and API: `corepack pnpm dev`.
+
+The web app runs at `http://localhost:5173`; API health is available at
+`http://localhost:3000/api/v1/health`.
+
 SiapSapa adalah **home learning companion** untuk membantu orang tua mendampingi anak usia 4–6 tahun dengan gangguan pendengaran yang baru mulai mengenali suara.
 
 MVP berfokus pada pembangunan fondasi kemampuan auditori melalui aktivitas sederhana, terstruktur, dan didampingi orang tua.

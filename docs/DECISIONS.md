@@ -1161,20 +1161,6 @@ Tidak perlu menguji seluruh edge case melalui E2E.
 
 # 16. Infrastructure Decisions
 
-## DEC-063 — Docker PostgreSQL for Local Development
-
-**Status:** ACTIVE
-
-Recommended local development database:
-
-```text
-PostgreSQL via Docker Compose
-```
-
-Developer tetap boleh menggunakan PostgreSQL lokal.
-
----
-
 ## DEC-064 — Provider Neutral Deployment
 
 **Status:** ACTIVE
