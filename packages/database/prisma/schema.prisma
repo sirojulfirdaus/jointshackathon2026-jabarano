@@ -7,5 +7,313 @@ datasource db {
   provider = "postgresql"
 }
 
-// Tech 2 owns the initial domain schema. Add models in the dependency order
-// documented in docs/DATA_MODEL.md before creating the first migration.
+enum ParentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum HearingDeviceType {
+  HEARING_AID
+  COCHLEAR_IMPLANT
+  OTHER
+  NONE
+  PREFER_NOT_TO_SAY
+}
+
+enum StartingAbility {
+  STARTING_SOUND_AWARENESS
+  FREQUENT_SOUND_AWARENESS
+  EARLY_SOUND_DISCRIMINATION
+}
+
+enum SoundCategory {
+  ANIMALS
+  VEHICLES
+  HOME
+  FAMILY
+  MUSIC
+  OTHER
+}
+
+enum Skill {
+  SOUND_DETECTION
+  SOUND_DISCRIMINATION
+  SOUND_ASSOCIATION
+}
+
+enum LearningState {
+  NOT_FOCUSED
+  EXPLORING
+  PRACTICING
+  BECOMING_CONSISTENT
+}
+
+enum StimulusType {
+  ENVIRONMENTAL_SOUND
+  ANIMAL_SOUND
+  HOUSEHOLD_SOUND
+  MUSICAL_SOUND
+  EARLY_SPEECH_SOUND
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+}
+
+enum ContrastLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum SessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  INCOMPLETE
+}
+
+enum TrialType {
+  DETECTION_SOUND
+  DETECTION_SILENT
+  DISCRIMINATION
+  ASSOCIATION
+}
+
+enum DiscriminationRelation {
+  SAME
+  DIFFERENT
+}
+
+enum TrialResultType {
+  INDEPENDENT_RESPONSE
+  PROMPTED_RESPONSE
+  NO_RESPONSE
+  FALSE_RESPONSE
+  TECHNICAL_ERROR
+}
+
+enum ParentObservationType {
+  OFTEN_RESPONDED_INDEPENDENTLY
+  RESPONDED_AFTER_REPETITION
+  NEEDED_FREQUENT_ASSISTANCE
+  DIFFICULTY_MAINTAINING_ATTENTION
+}
+
+model Parent {
+  id           String        @id @default(uuid()) @db.Uuid
+  email        String        @unique
+  passwordHash String
+  status       ParentStatus  @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  children     Child[]
+  authSessions AuthSession[]
+}
+
+model AuthSession {
+  id        String   @id @default(uuid()) @db.Uuid
+  parentId  String   @db.Uuid
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+  parent    Parent   @relation(fields: [parentId], references: [id], onDelete: Restrict)
+
+  @@index([parentId, expiresAt])
+}
+
+model Child {
+  id                String                       @id @default(uuid()) @db.Uuid
+  parentId          String                       @db.Uuid
+  nickname          String
+  birthYear         Int
+  hearingDeviceType HearingDeviceType
+  startingAbility   StartingAbility
+  createdAt         DateTime                     @default(now())
+  updatedAt         DateTime                     @updatedAt
+  parent            Parent                       @relation(fields: [parentId], references: [id], onDelete: Restrict)
+  familiarCategories ChildFamiliarSoundCategory[]
+  progress          LearningProgress[]
+  progressHistory   ProgressHistory[]
+  sessions          LearningSession[]
+
+  @@index([parentId])
+}
+
+model ChildFamiliarSoundCategory {
+  id        String        @id @default(uuid()) @db.Uuid
+  childId   String        @db.Uuid
+  category  SoundCategory
+  createdAt DateTime      @default(now())
+  child     Child         @relation(fields: [childId], references: [id], onDelete: Restrict)
+
+  @@unique([childId, category])
+}
+
+model LearningProgress {
+  id                   String        @id @default(uuid()) @db.Uuid
+  childId              String        @db.Uuid
+  skill                Skill
+  state                LearningState
+  recentValidTrials    Int           @default(0)
+  independentResponses Int           @default(0)
+  promptedResponses    Int           @default(0)
+  noResponses          Int           @default(0)
+  falseResponses       Int           @default(0)
+  updatedAt            DateTime      @updatedAt
+  child                Child         @relation(fields: [childId], references: [id], onDelete: Restrict)
+
+  @@unique([childId, skill])
+}
+
+model ProgressHistory {
+  id               String         @id @default(uuid()) @db.Uuid
+  childId          String         @db.Uuid
+  skill            Skill
+  previousState    LearningState?
+  newState         LearningState
+  independentRate  Decimal?       @db.Decimal(5, 4)
+  validTrialCount  Int
+  triggerSessionId String?        @db.Uuid
+  createdAt        DateTime       @default(now())
+  child            Child          @relation(fields: [childId], references: [id], onDelete: Restrict)
+
+  @@index([childId, skill, createdAt])
+}
+
+model VisualAsset {
+  id                   String              @id @default(uuid()) @db.Uuid
+  name                 String
+  assetPath            String
+  category             SoundCategory
+  isActive             Boolean             @default(true)
+  createdAt            DateTime            @default(now())
+  correctForStimuli    LearningStimulus[]
+  associationOptions   AssociationOption[]
+
+  @@index([category, isActive])
+}
+
+model LearningStimulus {
+  id                   String              @id @default(uuid()) @db.Uuid
+  name                 String
+  assetPath            String
+  stimulusType         StimulusType
+  category             SoundCategory
+  difficulty           Difficulty
+  durationMs           Int?
+  isActive             Boolean             @default(true)
+  correctVisualAssetId String?             @db.Uuid
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  correctVisualAsset   VisualAsset?        @relation(fields: [correctVisualAssetId], references: [id], onDelete: Restrict)
+  contrastsAsA         StimulusContrast[]  @relation("ContrastA")
+  contrastsAsB         StimulusContrast[]  @relation("ContrastB")
+  primaryTrials        Trial[]             @relation("PrimaryStimulus")
+  secondaryTrials      Trial[]             @relation("SecondaryStimulus")
+
+  @@index([category, difficulty, isActive])
+}
+
+model StimulusContrast {
+  id            String          @id @default(uuid()) @db.Uuid
+  stimulusAId   String          @db.Uuid
+  stimulusBId   String          @db.Uuid
+  contrastLevel ContrastLevel
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  stimulusA     LearningStimulus @relation("ContrastA", fields: [stimulusAId], references: [id], onDelete: Restrict)
+  stimulusB     LearningStimulus @relation("ContrastB", fields: [stimulusBId], references: [id], onDelete: Restrict)
+
+  @@unique([stimulusAId, stimulusBId])
+  @@index([contrastLevel, isActive])
+}
+
+model LearningSession {
+  id           String             @id @default(uuid()) @db.Uuid
+  childId      String             @db.Uuid
+  status       SessionStatus      @default(IN_PROGRESS)
+  startedAt    DateTime           @default(now())
+  completedAt  DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  child        Child              @relation(fields: [childId], references: [id], onDelete: Restrict)
+  activities   SessionActivity[]
+  observations ParentObservation[]
+
+  @@index([childId, startedAt])
+  @@index([childId, status])
+}
+
+model SessionActivity {
+  id        String          @id @default(uuid()) @db.Uuid
+  sessionId String          @db.Uuid
+  skill     Skill
+  sequence  Int
+  createdAt DateTime        @default(now())
+  session   LearningSession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  trials    Trial[]
+
+  @@unique([sessionId, sequence])
+  @@index([sessionId])
+}
+
+model Trial {
+  id                     String                   @id @default(uuid()) @db.Uuid
+  activityId             String                   @db.Uuid
+  sequence               Int
+  trialType              TrialType
+  stimulusId             String?                  @db.Uuid
+  stimulusBId            String?                  @db.Uuid
+  discriminationRelation DiscriminationRelation?
+  correctOptionId        String?                  @db.Uuid
+  createdAt              DateTime                 @default(now())
+  activity               SessionActivity          @relation(fields: [activityId], references: [id], onDelete: Restrict)
+  stimulus               LearningStimulus?        @relation("PrimaryStimulus", fields: [stimulusId], references: [id], onDelete: Restrict)
+  stimulusB              LearningStimulus?        @relation("SecondaryStimulus", fields: [stimulusBId], references: [id], onDelete: Restrict)
+  associationOptions     AssociationOption[]
+  result                 TrialResult?
+
+  @@unique([activityId, sequence])
+  @@index([activityId])
+}
+
+model AssociationOption {
+  id            String      @id @default(uuid()) @db.Uuid
+  trialId       String      @db.Uuid
+  visualAssetId String      @db.Uuid
+  sequence      Int
+  createdAt     DateTime    @default(now())
+  trial         Trial       @relation(fields: [trialId], references: [id], onDelete: Restrict)
+  visualAsset   VisualAsset @relation(fields: [visualAssetId], references: [id], onDelete: Restrict)
+
+  @@unique([trialId, visualAssetId])
+  @@unique([trialId, sequence])
+}
+
+model TrialResult {
+  id               String                   @id @default(uuid()) @db.Uuid
+  trialId          String                   @unique @db.Uuid
+  resultType       TrialResultType
+  responded        Boolean?
+  promptLevel     Int?
+  selectedOptionId String?                  @db.Uuid
+  selectedRelation DiscriminationRelation?
+  isCorrect        Boolean?
+  responseTimeMs  Int?
+  createdAt        DateTime                 @default(now())
+  trial            Trial                    @relation(fields: [trialId], references: [id], onDelete: Restrict)
+
+  @@index([createdAt])
+}
+
+model ParentObservation {
+  id              String                @id @default(uuid()) @db.Uuid
+  sessionId       String                @db.Uuid
+  observationType ParentObservationType
+  createdAt       DateTime              @default(now())
+  session         LearningSession       @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+
+  @@unique([sessionId])
+}
