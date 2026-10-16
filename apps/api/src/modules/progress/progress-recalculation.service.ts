@@ -8,7 +8,10 @@ export async function recalculateChildProgress(
   const skills = ['SOUND_DETECTION', 'SOUND_DISCRIMINATION', 'SOUND_ASSOCIATION'] as const;
   for (const skill of skills) {
     const results = await db.trialResult.findMany({
-      where: { trial: { activity: { session: { childId }, skill } } },
+      where: {
+        resultType: { not: 'TECHNICAL_ERROR' },
+        trial: { activity: { session: { childId }, skill } },
+      },
       orderBy: { createdAt: 'desc' },
       take: 10,
       select: { resultType: true },

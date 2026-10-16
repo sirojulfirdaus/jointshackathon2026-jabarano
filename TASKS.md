@@ -11,7 +11,7 @@ Status: planned. Semua task di bawah adalah P0 kecuali jika diberi label lain.
 ## Database architecture
 
 - [x] Implementasikan Prisma schema untuk `Parent`, `AuthSession`, `Child`, `LearningProgress`, `LearningSession`, `SessionActivity`, `Trial`, `AssociationOption`, `TrialResult`, dan `ProgressHistory`.
-- [ ] Generate dan commit migration awal setelah PostgreSQL development tersedia.
+- [x] Generate dan commit migration awal. Terapkan ke PostgreSQL development saat instance tersedia.
 - [ ] Terapkan UUID, foreign key, unique constraint, serta index sesuai data model; pertahankan historical learning data. Referensi: DEC-050 sampai DEC-053.
 - [ ] Tambahkan constraint aman terhadap race condition untuk maksimal satu `IN_PROGRESS` session per child. Referensi: BE-SESSION-03, DEC-016.
 - [ ] Sediakan transaction boundary untuk pembuatan child/progress, session/trial plan, dan completion/progress update. Referensi: BE-SYSTEM-01 sampai BE-SYSTEM-02.
